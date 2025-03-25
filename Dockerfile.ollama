@@ -17,55 +17,14 @@ ENV OLLAMA_MODELS=/root/.ollama
 ENV GODEBUG=x509ignoreCN=0
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-# Create a startup script that pulls models at initialization
+# Create a simple startup script
 COPY <<EOF /start.sh
 #!/bin/bash
 set -e
 
-# Start Ollama in the background
-/bin/ollama serve &
-OLLAMA_PID=\$!
-
-# Wait for Ollama to start
-echo "Waiting for Ollama to start..."
-sleep 5
-
-# Pull models at startup - this way happens inside the container
-echo "Initializing by pulling models..."
-
-# Try to pull a smaller model first
-if ! ollama list | grep -q "mistral"; then
-    echo "Pulling mistral model..."
-    ollama pull mistral:latest || echo "Failed to pull mistral, continuing anyway"
-fi
-
-# Try to pull the embedding model
-if ! ollama list | grep -q "nomic-embed-text"; then
-    echo "Pulling embedding model..."
-    ollama pull nomic-embed-text || echo "Failed to pull embedding model, continuing anyway"
-fi
-
-# Try to pull dolphin-mixtral model
-if ! ollama list | grep -q "dolphin-mixtral"; then
-    echo "Pulling dolphin-mixtral model..."
-    ollama pull dolphin-mixtral:8x7b || echo "Failed to pull dolphin-mixtral, continuing anyway"
-fi
-
-# Try to pull mxbai-embed-large model
-if ! ollama list | grep -q "mxbai-embed-large"; then
-    echo "Pulling mxbai-embed-large model..."
-    ollama pull mxbai-embed-large:335m || echo "Failed to pull mxbai-embed-large, continuing anyway"
-fi
-
-# Try to pull nidum-gemma model
-if ! ollama list | grep -q "nidum-gemma"; then
-    echo "Pulling nidum-gemma model..."
-    ollama pull nidumai/nidum-gemma-3-4b-it-uncensored:q3_k_m || echo "Failed to pull nidum-gemma, continuing anyway"
-fi
-
-# Keep the container running
-echo "Ollama is now running"
-wait \$OLLAMA_PID
+# Start Ollama
+echo "Starting Ollama..."
+exec /bin/ollama serve
 EOF
 
 RUN chmod +x /start.sh
